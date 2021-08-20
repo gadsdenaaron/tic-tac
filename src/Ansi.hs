@@ -1,6 +1,7 @@
 module Ansi
     ( 
-      Colour (Black, Red, Green, Yellow, Blue, Magenta, Cyan, White),
+      Colour (..),
+      Direction (..),
       printColour,
       clear,
       reset,
@@ -8,7 +9,11 @@ module Ansi
       printUnderline,
       underlineString,
       moveCursor,
-      Direction (Up_d, Down_d, Left_d, Right_d)
+      saveCursorPosition,
+      restoreCursorPosition,
+      moveCursorAbs,
+      showCursor,
+      hideCursor
     ) where
 
 import System.IO
@@ -39,16 +44,43 @@ clear :: IO ()
 -- ANSI Erase in display, clears display and sets cursor to top left position
 clear = putStr $ "\x1b[2J"
 
+saveCursorPosition :: IO ()
+saveCursorPosition = putStr $ "\x1b[s"
+
+restoreCursorPosition :: IO ()
+restoreCursorPosition = putStr $ "\x1b[u"
+
 data Direction = Up_d | Down_d | Left_d | Right_d
 
 moveCursor :: Direction -> Integer -> IO ()
 moveCursor Up_d n = putStr $ "\x1b[" ++ (show n) ++ "A"
 moveCursor Down_d n = putStr $ "\x1b[" ++ (show n) ++ "B"
-moveCursor Left_d n = putStr $ "\x1b[" ++ (show n) ++ "C"
-moveCursor Right_d n = putStr $ "\x1b[" ++ (show n) ++ "D"
+moveCursor Right_d n = putStr $ "\x1b[" ++ (show n) ++ "C"
+moveCursor Left_d n = putStr $ "\x1b[" ++ (show n) ++ "D"
+
+moveCursorAbs :: Integer -> Integer -> Integer -> Integer -> IO ()
+moveCursorAbs u d r l = do
+    putStr $ "\x1b[" ++ (show u) ++ "A"
+    putStr $ "\x1b[" ++ (show d) ++ "B"
+    putStr $ "\x1b[" ++ (show r) ++ "C"
+    putStr $ "\x1b[" ++ (show l) ++ "D"
 
 exit :: IO ()
 exit = do
   clear
   putStr "\x1b[1;1H"
   exitSuccess
+
+getCursorPosition :: IO ()
+getCursorPosition = do
+
+  hSetEcho stdin True
+  putStr $ "\x1b[6n"
+  hFlush stdout
+  hSetEcho stdin False
+
+hideCursor :: IO ()
+hideCursor = putStr "\x1b[?25l"
+
+showCursor :: IO ()
+showCursor = putStr "\x1b[?25h"
